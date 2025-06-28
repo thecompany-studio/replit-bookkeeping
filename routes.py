@@ -75,17 +75,17 @@ def upload():
     if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file selected.', 'danger')
-            return redirect(request.url)
+            return redirect(url_for('upload'))
         
         file = request.files['file']
         if file.filename == '':
             flash('No file selected.', 'danger')
-            return redirect(request.url)
+            return redirect(url_for('upload'))
         
-        if file and allowed_file(file.filename):
+        if file and file.filename and allowed_file(file.filename):
             try:
                 # Generate unique filename
-                filename = secure_filename(file.filename)
+                filename = secure_filename(file.filename or "")
                 unique_filename = f"{uuid.uuid4()}_{filename}"
                 filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
                 
