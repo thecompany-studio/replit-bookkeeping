@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Upload - Bookkeeping App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1><i class="fas fa-upload me-2"></i>Upload Receipt or Invoice</h1>
+        <p class="lead">Upload an image to extract text and detect QR codes or barcodes.</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-file-upload me-2"></i>Select Image File</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <div class="mb-4">
+                        <label for="file" class="form-label">Choose Image</label>
+                        <input type="file" class="form-control" id="file" name="file" 
+                               accept="image/*" required>
+                        <div class="form-text">
+                            Supported formats: PNG, JPG, JPEG, GIF, BMP, TIFF, WebP (Max size: 16MB)
+                        </div>
+                    </div>
+                    
+                    <!-- Image Preview -->
+                    <div id="imagePreview" class="mb-4" style="display: none;">
+                        <h6>Preview:</h6>
+                        <img id="previewImg" class="img-fluid border rounded" style="max-height: 300px;">
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn">
+                            <i class="fas fa-upload me-2"></i>Upload and Process
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Processing Indicator -->
+                <div id="processingIndicator" class="text-center mt-4" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Processing...</span>
+                    </div>
+                    <div class="mt-2">
+                        <h6>Processing image...</h6>
+                        <p class="text-muted mb-0">This may take a few moments while we extract text and detect codes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Processing Information -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card bg-dark border-info">
+            <div class="card-header border-info">
+                <h6><i class="fas fa-eye text-info me-2"></i>OCR Processing</h6>
+            </div>
+            <div class="card-body">
+                <p class="small mb-2">Our OCR system will extract text from your image including:</p>
+                <ul class="small mb-0">
+                    <li>Receipt text and amounts</li>
+                    <li>Invoice numbers and dates</li>
+                    <li>Merchant information</li>
+                    <li>Product descriptions</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card bg-dark border-warning">
+            <div class="card-header border-warning">
+                <h6><i class="fas fa-qrcode text-warning me-2"></i>Code Detection</h6>
+            </div>
+            <div class="card-body">
+                <p class="small mb-2">We'll automatically detect and decode:</p>
+                <ul class="small mb-0">
+                    <li>QR codes with embedded data</li>
+                    <li>UPC/EAN product barcodes</li>
+                    <li>Code 128 and other formats</li>
+                    <li>URLs, contact info, and more</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tips for Better Results -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card bg-dark border-success">
+            <div class="card-header border-success">
+                <h6><i class="fas fa-lightbulb text-success me-2"></i>Tips for Better Results</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-camera text-primary me-1"></i>Image Quality</h6>
+                        <ul class="small">
+                            <li>Use good lighting and avoid shadows</li>
+                            <li>Keep the image in focus and sharp</li>
+                            <li>Capture the entire document</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-align-center text-primary me-1"></i>Positioning</h6>
+                        <ul class="small">
+                            <li>Hold the camera straight and level</li>
+                            <li>Make sure text is clearly visible</li>
+                            <li>Avoid glare and reflections</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('file');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+    const uploadForm = document.getElementById('uploadForm');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const processingIndicator = document.getElementById('processingIndicator');
+    
+    // Handle file selection and preview
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file size (16MB = 16 * 1024 * 1024 bytes)
+            if (file.size > 16 * 1024 * 1024) {
+                alert('File is too large. Maximum size is 16MB.');
+                fileInput.value = '';
+                imagePreview.style.display = 'none';
+                return;
+            }
+            
+            // Validate file type
+            const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/bmp', 'image/tiff', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                alert('Invalid file type. Please select an image file.');
+                fileInput.value = '';
+                imagePreview.style.display = 'none';
+                return;
+            }
+            
+            // Create preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                imagePreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            imagePreview.style.display = 'none';
+        }
+    });
+    
+    // Handle form submission
+    uploadForm.addEventListener('submit', function(e) {
+        const file = fileInput.files[0];
+        if (!file) {
+            e.preventDefault();
+            alert('Please select a file to upload.');
+            return;
+        }
+        
+        // Show processing indicator
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        processingIndicator.style.display = 'block';
+        
+        // Form will submit normally
+    });
+    
+    // Handle drag and drop
+    const cardBody = document.querySelector('.card-body');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        cardBody.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        cardBody.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        cardBody.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight(e) {
+        cardBody.classList.add('border-primary');
+    }
+    
+    function unhighlight(e) {
+        cardBody.classList.remove('border-primary');
+    }
+    
+    cardBody.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            fileInput.files = files;
+            fileInput.dispatchEvent(new Event('change'));
+        }
+    }
+});
+</script>
+{% endblock %}
